@@ -160,10 +160,34 @@ ShellRoot {
         console.warn("AIQ pins: " + steps.join(" | "))
     }
 
+    // Hide unused limits on the real widget: an untouched limit leaves the pill,
+    // a blocked provider and a balance stay, and an empty pill is reported.
+    function checkUnused() {
+        var saved = widget.usageData
+        var data = JSON.parse(JSON.stringify(saved))
+        data.claude.entries[0].percentUsed = 0
+        data.codex.entries[0].percentUsed = 0
+        data.codex.entries[1].percentUsed = 100
+        widget.usageData = data
+        widget.hideUnused = true
+        var shown = widget.pillItems().map(function (item) { return item.provider }).join(",")
+        var state = JSON.parse(JSON.stringify(widget.pinState))
+        for (var id in state) state[id] = id === "claude" ? ["5h"] : []
+        var pins = widget.pinState
+        widget.pinState = state
+        var steps = [shown, widget.pillItems().length + ":" + widget.pillEmpty]
+        widget.hideUnused = false
+        steps.push(widget.pillItems().length + ":" + widget.pillEmpty)
+        widget.pinState = pins
+        widget.usageData = saved
+        console.warn("AIQ unused: " + steps.join(" | "))
+    }
+
     // Select a tab, wait for the tab animation, save, then continue.
     function nextShot() {
         if (shots.length === 0) {
             checkPins()
+            checkUnused()
             console.warn("AIQ done")
             Qt.callLater(Qt.quit)
             return

@@ -118,12 +118,13 @@ PluginSettings {
         SectionTitle {
             text: I18n.tr("Display and Refresh")
             icon: "display_settings"
-            showReset: refreshInterval.isDirty || showResetTime.isDirty || showResetCountdown.isDirty || displayMode.isDirty
+            showReset: refreshInterval.isDirty || showResetTime.isDirty || showResetCountdown.isDirty || displayMode.isDirty || hideUnused.isDirty
             onResetClicked: {
                 refreshInterval.resetToDefault()
                 showResetTime.resetToDefault()
                 showResetCountdown.resetToDefault()
                 displayMode.resetToDefault()
+                hideUnused.resetToDefault()
             }
         }
 
@@ -172,6 +173,16 @@ PluginSettings {
                 { label: I18n.tr("Used (%)"), value: "used" }
             ]
             defaultValue: "remaining"
+        }
+
+        Separator {}
+
+        ToggleSettingPlus {
+            id: hideUnused
+            settingKey: "hideUnused"
+            label: I18n.tr("Hide Unused Limits")
+            description: I18n.tr("Leave a pinned limit out of the bar pill until it has been used.")
+            defaultValue: false
         }
     }
 

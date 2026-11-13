@@ -11,6 +11,7 @@ PluginComponent {
     property string displayMode: pluginData.displayMode || "remaining"
     property bool showResetTime: pluginData.showResetTime !== false
     property bool showResetCountdown: pluginData.showResetCountdown === true
+    property bool hideUnused: pluginData.hideUnused === true
     property string pluginDir: {
         var url = Qt.resolvedUrl(".")
         var path = url.toString()
@@ -263,7 +264,8 @@ PluginComponent {
     }
 
     // Pinned rows for the bar pill, with a separator before each new provider.
-    // A blocked provider shows every pinned window as used up.
+    // A blocked provider shows every pinned window as used up. With hideUnused,
+    // a limit that still reads as untouched is left out. Balances always show.
     function pillItems() {
         var out = []
         var enabled = enabledProviders()
@@ -273,6 +275,11 @@ PluginComponent {
                 return pins.indexOf(row.pinKey) >= 0
             })
             var blocked = providerBlocked(enabled[i].id)
+            if (hideUnused && !blocked) {
+                rows = rows.filter(function (row) {
+                    return row.isBalance || Math.round(row.percentUsed) > 0
+                })
+            }
             for (var j = 0; j < rows.length; j++) {
                 rows[j].separator = out.length > 0 && j === 0
                 if (blocked && !rows[j].isBalance) rows[j].shortValue = Math.round(pctVal(100)) + "%"
@@ -404,6 +411,9 @@ PluginComponent {
 
     // --- Bar Pills ---
 
+    // Data has arrived, but no pinned limit is on display.
+    readonly property bool pillEmpty: usageData !== null && pillItems().length === 0
+
     // Same text size as the native DMS bar widgets.
     readonly property real barTextSize: Theme.barTextSize(barThickness, barConfig?.fontScale, barConfig?.maximizeWidgetText)
 
@@ -425,6 +435,14 @@ PluginComponent {
                     text: "✳ -"
                     color: Theme.surfaceTextMedium
                     font.pixelSize: root.barTextSize
+                }
+
+                DankIcon {
+                    visible: root.pillEmpty
+                    name: "data_usage"
+                    size: Theme.iconSizeSmall
+                    color: Theme.surfaceTextMedium
+                    anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Repeater {
@@ -481,6 +499,14 @@ PluginComponent {
                     text: "✳"
                     color: Theme.surfaceTextMedium
                     font.pixelSize: Theme.fontSizeMedium
+                }
+
+                DankIcon {
+                    visible: root.pillEmpty
+                    name: "data_usage"
+                    size: Theme.iconSizeSmall
+                    color: Theme.surfaceTextMedium
+                    anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 Repeater {

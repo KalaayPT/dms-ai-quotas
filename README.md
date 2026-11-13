@@ -27,6 +27,7 @@ Monitor Claude, Codex, OpenCode Go, Z.ai, Kimi Code, DeepSeek, OpenRouter, Grok,
 - Pin any limit or balance from the popout. You can pin several per provider.
 - When a provider has no window that matches its pins, the pill shows its first window. For example, Codex free plans have no 5-hour window.
 - When a blocking limit is used up, the pill shows the provider as used up, even if the pinned window still has room.
+- Optionally hide pinned limits that have not been used yet. The pill shows an icon when it has nothing else to show.
 - Show remaining or used percentages, in the pill and the popout.
 - Reset times as a date or as a countdown.
 - Turn each provider on or off.
@@ -63,6 +64,7 @@ Then in DMS:
 | Show Reset Times | on | Show reset information in the popout |
 | Show Reset Countdown | off | Show a countdown instead of the reset date and time |
 | Display Mode | Remaining (%) | Show remaining or used percentages |
+| Hide Unused Limits | off | Leave a pinned limit out of the bar pill until it has been used |
 | OpenCode Go API Key | empty | Optional. Overrides the key from `opencode /connect` |
 | Z.ai Coding Plan API Key | empty | Your GLM Coding Plan API key |
 | Z.ai Region | Global | Global (`api.z.ai`) or China (`open.bigmodel.cn`) |

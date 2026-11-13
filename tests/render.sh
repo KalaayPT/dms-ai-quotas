@@ -8,8 +8,8 @@ set -eu
 # Saves one PNG per provider tab, vertical.png, settings.png, pill.txt, and
 # quickshell.log to AIQ_TEST_ARTIFACT_DIR (default tests/render-output).
 # Failures: QML errors in plugin files, a pill that does not show the expected
-# value for every provider, pins that cannot fall back or be removed, and
-# missing images.
+# value for every provider, pins that cannot fall back or be removed, unused
+# limits that are not hidden, and missing images.
 #
 # Needs DankMaterialShell, quickshell (qs), dbus-run-session, and jq. The render
 # uses temporary XDG directories and its own D-Bus session, so it does not
@@ -23,7 +23,7 @@ repo=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 out="${AIQ_TEST_ARTIFACT_DIR:-$repo/tests/render-output}"
 expected_pill='claude=62% codex=88% opencode=78% zai=73% kimi=84% deepseek=18.42$ openrouter=9.66$ grok=38% antigravity=80%'
 
-shell_dir="${DMS_SHELL_DIR:-$(pgrep -a qs | sed -n 's/.* -p \([^ ]*danklinux-shell[^ ]*\).*/\1/p' | head -n 1)}"
+shell_dir="${DMS_SHELL_DIR:-$(pgrep -a qs | sed -n 's/.* -p \([^ ]*\(danklinux\|dms\)-shell[^ ]*\).*/\1/p' | head -n 1)}"
 if [ ! -f "$shell_dir/shell.qml" ]; then
     printf '%s\n' 'Could not find the DMS shell. Start DMS, or set DMS_SHELL_DIR.' >&2
     exit 2
@@ -57,7 +57,10 @@ awk '
     skip && /^    \}/ { skip = 0; next }
     !skip
 ' "$shell_dir/Modules/Plugins/PluginComponent.qml" > "$harness/Modules/Plugins/PluginComponent.qml"
-cp "$repo/tests/render/shell.qml" "$harness/shell.qml"
+# Newer DMS releases name the shared module DCommon instead of DankCommon.
+common=DankCommon
+[ -d "$shell_dir/DCommon" ] && common=DCommon
+sed "s/qs\\.DankCommon\\.Common/qs.$common.Common/" "$repo/tests/render/shell.qml" > "$harness/shell.qml"
 
 # One JSON line, because the daemon parses line by line. Resets are relative to now.
 now=$(date +%s)
@@ -96,6 +99,9 @@ sed -n 's/.*AIQ pill: //p' "$out/quickshell.log" > "$out/pill.txt"
     fail "Unexpected pill: $(cat "$out/pill.txt") (expected: $expected_pill)"
 pins=$(sed -n 's/.*AIQ pins: //p' "$out/quickshell.log")
 [ "$pins" = '5h | Weekly |  | 5h' ] || fail "Unexpected pin behavior: $pins (expected: 5h | Weekly |  | 5h)"
+unused=$(sed -n 's/.*AIQ unused: //p' "$out/quickshell.log")
+expected_unused='codex,opencode,zai,kimi,deepseek,openrouter,grok,antigravity | 0:true | 1:false'
+[ "$unused" = "$expected_unused" ] || fail "Unexpected unused-limit behavior: $unused (expected: $expected_unused)"
 for name in claude codex opencode zai kimi deepseek openrouter grok antigravity vertical settings; do
     [ -s "$out/$name.png" ] || fail "Missing $name.png."
 done
